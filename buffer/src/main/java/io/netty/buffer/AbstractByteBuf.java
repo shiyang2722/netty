@@ -284,6 +284,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     final void ensureWritable0(int minWritableBytes) {
         ensureAccessible();
+        // 如果需要的空间小于剩余空间,直接返回,可用
         if (minWritableBytes <= writableBytes()) {
             return;
         }
@@ -297,16 +298,21 @@ public abstract class AbstractByteBuf extends ByteBuf {
         }
 
         // Normalize the current capacity to the power of 2.
+        // 定位到需要空间的最后位置
         int minNewCapacity = writerIndex + minWritableBytes;
+        // 计算出需要的空间,保证是2的倍数
         int newCapacity = alloc().calculateNewCapacity(minNewCapacity, maxCapacity);
-
+        // 当前可用容量的索引位置
         int fastCapacity = writerIndex + maxFastWritableBytes();
         // Grow by a smaller amount if it will avoid reallocation
+        // 如果新算出来需要的容量大于当前可用的容量,但是需要的容量小于当前可用的容量
+        // 说明新算出来2的倍数的容量大了,先分配给当前最大的容量就行了,这样即满足了需要的容量,也避免了从新分配的消耗
         if (newCapacity > fastCapacity && minNewCapacity <= fastCapacity) {
             newCapacity = fastCapacity;
         }
 
         // Adjust to the new capacity.
+        // 将空间调整到newCapacity
         capacity(newCapacity);
     }
 
@@ -686,6 +692,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
             _setLong(index, 0);
             index += 8;
         }
+
         if (nBytes == 4) {
             _setInt(index, 0);
             // Not need to update the index as we not will use it after this.
